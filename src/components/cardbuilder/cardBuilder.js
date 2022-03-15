@@ -5,6 +5,7 @@
  * @module components/cardBuilder/cardBuilder
  */
 
+import escapeHtml from 'escape-html';
 import datetime from '../../scripts/datetime';
 import imageLoader from '../images/imageLoader';
 import itemHelper from '../itemHelper';
@@ -145,7 +146,7 @@ import ServerConnections from '../ServerConnections';
                         return 100 / 14.2857142857;
                     }
                     if (screenWidth >= 1200) {
-                        return 100 / 16.666666666666666666;
+                        return 100 / 16.66666667;
                     }
                     if (screenWidth >= 1000) {
                         return 5;
@@ -481,12 +482,20 @@ import ServerConnections from '../ServerConnections';
             return null;
         }
 
+        /**
+         * @typedef {Object} CardImageUrl
+         * @property {string} imgUrl - Image URL.
+         * @property {string} blurhash - Image blurhash.
+         * @property {boolean} forceName - Force name.
+         * @property {boolean} coverImage - Use cover style.
+         */
+
         /** Get the URL of the card's image.
          * @param {Object} item - Item for which to generate a card.
          * @param {Object} apiClient - API client object.
          * @param {Object} options - Options of the card.
          * @param {string} shape - Shape of the desired image.
-         * @returns {Object} Object representing the URL of the card's image.
+         * @returns {CardImageUrl} Object representing the URL of the card's image.
          */
         function getCardImageUrl(item, apiClient, options, shape) {
             item = item.ProgramInfo || item;
@@ -639,7 +648,7 @@ import ServerConnections from '../ServerConnections';
 
         /**
          * Generates an index used to select the default color of a card based on a string.
-         * @param {string} str - String to use for generating the index.
+         * @param {?string} [str] - String to use for generating the index.
          * @returns {number} Index of the color.
          */
         function getDefaultColorIndex(str) {
@@ -726,8 +735,8 @@ import ServerConnections from '../ServerConnections';
         /**
          * Returns the air time text for the item based on the given times.
          * @param {object} item - Item used to generate the air time text.
-         * @param {string} showAirDateTime - ISO8601 date for the start of the show.
-         * @param {string} showAirEndTime - ISO8601 date for the end of the show.
+         * @param {boolean} showAirDateTime - ISO8601 date for the start of the show.
+         * @param {boolean} showAirEndTime - ISO8601 date for the end of the show.
          * @returns {string} The air time text for the item based on the given dates.
          */
         function getAirTimeText(item, showAirDateTime, showAirEndTime) {
@@ -771,6 +780,7 @@ import ServerConnections from '../ServerConnections';
          * @returns {string} HTML markup of the card's footer text element.
          */
         function getCardFooterText(item, apiClient, options, showTitle, forceName, overlayText, imgUrl, footerClass, progressHtml, logoUrl, isOuterFooter) {
+            item = item.ProgramInfo || item;
             let html = '';
 
             if (logoUrl) {
@@ -781,7 +791,7 @@ import ServerConnections from '../ServerConnections';
 
             if (isOuterFooter && options.cardLayout && layoutManager.mobile) {
                 if (options.cardFooterAside !== 'none') {
-                    html += '<button is="paper-icon-button-light" class="itemAction btnCardOptions cardText-secondary" data-action="menu"><span class="material-icons more_vert"></span></button>';
+                    html += `<button is="paper-icon-button-light" class="itemAction btnCardOptions cardText-secondary" data-action="menu" title="${globalize.translate('ButtonMore')}"><span class="material-icons more_vert" aria-hidden="true"></span></button>`;
                 }
             }
 
@@ -804,11 +814,11 @@ import ServerConnections from '../ServerConnections';
                                 IsFolder: true
                             }));
                         } else {
-                            lines.push(item.SeriesName);
+                            lines.push(escapeHtml(item.SeriesName));
                         }
                     } else {
                         if (isUsingLiveTvNaming(item)) {
-                            lines.push(item.Name);
+                            lines.push(escapeHtml(item.Name));
 
                             if (!item.EpisodeTitle) {
                                 titleAdded = true;
@@ -817,7 +827,7 @@ import ServerConnections from '../ServerConnections';
                             const parentTitle = item.SeriesName || item.Series || item.Album || item.AlbumArtist || '';
 
                             if (parentTitle || showTitle) {
-                                lines.push(parentTitle);
+                                lines.push(escapeHtml(parentTitle));
                             }
                         }
                     }
@@ -851,8 +861,12 @@ import ServerConnections from '../ServerConnections';
                         item.AlbumArtists[0].IsFolder = true;
                         lines.push(getTextActionButton(item.AlbumArtists[0], null, serverId));
                     } else {
-                        lines.push(isUsingLiveTvNaming(item) ? item.Name : (item.SeriesName || item.Series || item.Album || item.AlbumArtist || ''));
+                        lines.push(escapeHtml(isUsingLiveTvNaming(item) ? item.Name : (item.SeriesName || item.Series || item.Album || item.AlbumArtist || '')));
                     }
+                }
+
+                if (item.ExtraType && item.ExtraType !== 'Unknown') {
+                    lines.push(globalize.translate(item.ExtraType));
                 }
 
                 if (options.showItemCounts) {
@@ -935,13 +949,13 @@ import ServerConnections from '../ServerConnections';
 
                         }, item.ChannelName));
                     } else {
-                        lines.push(item.ChannelName || '&nbsp;');
+                        lines.push(escapeHtml(item.ChannelName) || '&nbsp;');
                     }
                 }
 
                 if (options.showCurrentProgram && item.Type === 'TvChannel') {
                     if (item.CurrentProgram) {
-                        lines.push(item.CurrentProgram.Name);
+                        lines.push(escapeHtml(item.CurrentProgram.Name));
                     } else {
                         lines.push('');
                     }
@@ -967,13 +981,13 @@ import ServerConnections from '../ServerConnections';
                     if (item.RecordAnyChannel) {
                         lines.push(globalize.translate('AllChannels'));
                     } else {
-                        lines.push(item.ChannelName || globalize.translate('OneChannel'));
+                        lines.push(escapeHtml(item.ChannelName) || globalize.translate('OneChannel'));
                     }
                 }
 
                 if (options.showPersonRoleOrType) {
                     if (item.Role) {
-                        lines.push(globalize.translate('PersonRole', item.Role));
+                        lines.push(globalize.translate('PersonRole', escapeHtml(item.Role)));
                     }
                 }
             }
@@ -983,7 +997,7 @@ import ServerConnections from '../ServerConnections';
             }
 
             if (overlayText && showTitle) {
-                lines = [item.Name];
+                lines = [escapeHtml(item.Name)];
             }
 
             const addRightTextMargin = isOuterFooter && options.cardLayout && !options.centerText && options.cardFooterAside !== 'none' && layoutManager.mobile;
@@ -1017,6 +1031,8 @@ import ServerConnections from '../ServerConnections';
             if (!text) {
                 text = itemHelper.getDisplayName(item);
             }
+
+            text = escapeHtml(text);
 
             if (layoutManager.tv) {
                 return text;
@@ -1124,7 +1140,7 @@ import ServerConnections from '../ServerConnections';
 
         /**
          * Returns the default background class for a card based on a string.
-         * @param {string} str - Text used to generate the background class.
+         * @param {?string} [str] - Text used to generate the background class.
          * @returns {string} CSS classes for default card backgrounds.
          */
         export function getDefaultBackgroundClass(str) {
@@ -1296,15 +1312,15 @@ import ServerConnections from '../ServerConnections';
                 const btnCssClass = 'cardOverlayButton cardOverlayButton-br itemAction';
 
                 if (options.centerPlayButton) {
-                    overlayButtons += '<button is="paper-icon-button-light" class="' + btnCssClass + ' cardOverlayButton-centered" data-action="play"><span class="material-icons cardOverlayButtonIcon play_arrow"></span></button>';
+                    overlayButtons += `<button is="paper-icon-button-light" class="${btnCssClass} cardOverlayButton-centered" data-action="play" title="${globalize.translate('Play')}"><span class="material-icons cardOverlayButtonIcon play_arrow" aria-hidden="true"></span></button>`;
                 }
 
                 if (overlayPlayButton && !item.IsPlaceHolder && (item.LocationType !== 'Virtual' || !item.MediaType || item.Type === 'Program') && item.Type !== 'Person') {
-                    overlayButtons += '<button is="paper-icon-button-light" class="' + btnCssClass + '" data-action="play"><span class="material-icons cardOverlayButtonIcon play_arrow"></span></button>';
+                    overlayButtons += `<button is="paper-icon-button-light" class="${btnCssClass}" data-action="play" title="${globalize.translate('Play')}"><span class="material-icons cardOverlayButtonIcon play_arrow" aria-hidden="true"></span></button>`;
                 }
 
                 if (options.overlayMoreButton) {
-                    overlayButtons += '<button is="paper-icon-button-light" class="' + btnCssClass + '" data-action="menu"><span class="material-icons cardOverlayButtonIcon more_vert"></span></button>';
+                    overlayButtons += `<button is="paper-icon-button-light" class="${btnCssClass}" data-action="menu" title="${globalize.translate('ButtonMore')}"><span class="material-icons cardOverlayButtonIcon more_vert" aria-hidden="true"></span></button>`;
                 }
             }
 
@@ -1331,15 +1347,28 @@ import ServerConnections from '../ServerConnections';
 
                 cardImageContainerClose = '</div>';
             } else {
+                const cardImageContainerAriaLabelAttribute = ` aria-label="${item.Name}"`;
+
                 // Don't use the IMG tag with safari because it puts a white border around it
-                cardImageContainerOpen = imgUrl ? ('<button data-action="' + action + '" class="' + cardImageContainerClass + ' ' + cardContentClass + ' itemAction lazy" data-src="' + imgUrl + '" ' + blurhashAttrib + '>') : ('<button data-action="' + action + '" class="' + cardImageContainerClass + ' ' + cardContentClass + ' itemAction">');
+                cardImageContainerOpen = imgUrl ? ('<button data-action="' + action + '" class="' + cardImageContainerClass + ' ' + cardContentClass + ' itemAction lazy" data-src="' + imgUrl + '" ' + blurhashAttrib + cardImageContainerAriaLabelAttribute + '>') : ('<button data-action="' + action + '" class="' + cardImageContainerClass + ' ' + cardContentClass + ' itemAction"' + cardImageContainerAriaLabelAttribute + '>');
 
                 cardImageContainerClose = '</button>';
             }
 
             const cardScalableClass = 'cardScalable';
 
-            cardImageContainerOpen = '<div class="' + cardBoxClass + '"><div class="' + cardScalableClass + '"><div class="cardPadder cardPadder-' + shape + '"></div>' + cardImageContainerOpen;
+            let cardPadderIcon = '';
+
+            // TV Channel logos are transparent so skip the placeholder to avoid overlapping
+            if (imgUrl && item.Type !== 'TvChannel') {
+                cardPadderIcon = getDefaultText(item, {
+                    // Always use an icon
+                    defaultCardImageIcon: 'folder',
+                    ...options
+                });
+            }
+
+            cardImageContainerOpen = `<div class="${cardBoxClass}"><div class="${cardScalableClass}"><div class="cardPadder cardPadder-${shape}">${cardPadderIcon}</div>${cardImageContainerOpen}`;
             cardBoxClose = '</div>';
             cardScalableClose = '</div>';
 
@@ -1396,10 +1425,12 @@ import ServerConnections from '../ServerConnections';
             }
 
             let actionAttribute;
+            let ariaLabelAttribute = '';
 
             if (tagName === 'button') {
                 className += ' itemAction';
                 actionAttribute = ' data-action="' + action + '"';
+                ariaLabelAttribute = ` aria-label="${item.Name}"`;
             } else {
                 actionAttribute = '';
             }
@@ -1414,7 +1445,7 @@ import ServerConnections from '../ServerConnections';
             const mediaTypeData = item.MediaType ? (' data-mediatype="' + item.MediaType + '"') : '';
             const collectionTypeData = item.CollectionType ? (' data-collectiontype="' + item.CollectionType + '"') : '';
             const channelIdData = item.ChannelId ? (' data-channelid="' + item.ChannelId + '"') : '';
-            const pathData = item.Path ? (' data-path="' + item.Path + '"') : '';
+            const pathData = item.Path ? (' data-path="' + escapeHtml(item.Path) + '"') : '';
             const contextData = options.context ? (' data-context="' + options.context + '"') : '';
             const parentIdData = options.parentId ? (' data-parentid="' + options.parentId + '"') : '';
             const startDate = item.StartDate ? (' data-startdate="' + item.StartDate.toString() + '"') : '';
@@ -1426,7 +1457,7 @@ import ServerConnections from '../ServerConnections';
                 additionalCardContent += getHoverMenuHtml(item, action);
             }
 
-            return '<' + tagName + ' data-index="' + index + '"' + timerAttributes + actionAttribute + ' data-isfolder="' + (item.IsFolder || false) + '" data-serverid="' + (item.ServerId || options.serverId) + '" data-id="' + (item.Id || item.ItemId) + '" data-type="' + item.Type + '"' + mediaTypeData + collectionTypeData + channelIdData + pathData + positionTicksData + collectionIdData + playlistIdData + contextData + parentIdData + startDate + endDate + ' data-prefix="' + prefix + '" class="' + className + '">' + cardImageContainerOpen + innerCardFooter + cardImageContainerClose + overlayButtons + additionalCardContent + cardScalableClose + outerCardFooter + cardBoxClose + '</' + tagName + '>';
+            return '<' + tagName + ' data-index="' + index + '"' + timerAttributes + actionAttribute + ' data-isfolder="' + (item.IsFolder || false) + '" data-serverid="' + (item.ServerId || options.serverId) + '" data-id="' + (item.Id || item.ItemId) + '" data-type="' + item.Type + '"' + mediaTypeData + collectionTypeData + channelIdData + pathData + positionTicksData + collectionIdData + playlistIdData + contextData + parentIdData + startDate + endDate + ' data-prefix="' + escapeHtml(prefix) + '" class="' + className + '"' + ariaLabelAttribute + '>' + cardImageContainerOpen + innerCardFooter + cardImageContainerClose + overlayButtons + additionalCardContent + cardScalableClose + outerCardFooter + cardBoxClose + '</' + tagName + '>';
         }
 
         /**
@@ -1443,7 +1474,7 @@ import ServerConnections from '../ServerConnections';
             const btnCssClass = 'cardOverlayButton cardOverlayButton-hover itemAction paper-icon-button-light';
 
             if (playbackManager.canPlay(item)) {
-                html += '<button is="paper-icon-button-light" class="' + btnCssClass + ' cardOverlayFab-primary" data-action="resume"><span class="material-icons cardOverlayButtonIcon cardOverlayButtonIcon-hover play_arrow"></span></button>';
+                html += '<button is="paper-icon-button-light" class="' + btnCssClass + ' cardOverlayFab-primary" data-action="resume"><span class="material-icons cardOverlayButtonIcon cardOverlayButtonIcon-hover play_arrow" aria-hidden="true"></span></button>';
             }
 
             html += '<div class="cardOverlayButton-br flex">';
@@ -1453,7 +1484,7 @@ import ServerConnections from '../ServerConnections';
             if (itemHelper.canMarkPlayed(item)) {
                 /* eslint-disable-next-line  @babel/no-unused-expressions */
                 import('../../elements/emby-playstatebutton/emby-playstatebutton');
-                html += '<button is="emby-playstatebutton" type="button" data-action="none" class="' + btnCssClass + '" data-id="' + item.Id + '" data-serverid="' + item.ServerId + '" data-itemtype="' + item.Type + '" data-played="' + (userData.Played) + '"><span class="material-icons cardOverlayButtonIcon cardOverlayButtonIcon-hover check"></span></button>';
+                html += '<button is="emby-playstatebutton" type="button" data-action="none" class="' + btnCssClass + '" data-id="' + item.Id + '" data-serverid="' + item.ServerId + '" data-itemtype="' + item.Type + '" data-played="' + (userData.Played) + '"><span class="material-icons cardOverlayButtonIcon cardOverlayButtonIcon-hover check" aria-hidden="true"></span></button>';
             }
 
             if (itemHelper.canRate(item)) {
@@ -1461,10 +1492,10 @@ import ServerConnections from '../ServerConnections';
 
                 /* eslint-disable-next-line  @babel/no-unused-expressions */
                 import('../../elements/emby-ratingbutton/emby-ratingbutton');
-                html += '<button is="emby-ratingbutton" type="button" data-action="none" class="' + btnCssClass + '" data-id="' + item.Id + '" data-serverid="' + item.ServerId + '" data-itemtype="' + item.Type + '" data-likes="' + likes + '" data-isfavorite="' + (userData.IsFavorite) + '"><span class="material-icons cardOverlayButtonIcon cardOverlayButtonIcon-hover favorite"></span></button>';
+                html += '<button is="emby-ratingbutton" type="button" data-action="none" class="' + btnCssClass + '" data-id="' + item.Id + '" data-serverid="' + item.ServerId + '" data-itemtype="' + item.Type + '" data-likes="' + likes + '" data-isfavorite="' + (userData.IsFavorite) + '"><span class="material-icons cardOverlayButtonIcon cardOverlayButtonIcon-hover favorite" aria-hidden="true"></span></button>';
             }
 
-            html += '<button is="paper-icon-button-light" class="' + btnCssClass + '" data-action="menu"><span class="material-icons cardOverlayButtonIcon cardOverlayButtonIcon-hover more_vert"></span></button>';
+            html += `<button is="paper-icon-button-light" class="${btnCssClass}" data-action="menu" title="${globalize.translate('ButtonMore')}"><span class="material-icons cardOverlayButtonIcon cardOverlayButtonIcon-hover more_vert" aria-hidden="true"></span></button>`;
             html += '</div>';
             html += '</div>';
 
@@ -1479,39 +1510,44 @@ import ServerConnections from '../ServerConnections';
          */
         export function getDefaultText(item, options) {
             if (item.CollectionType) {
-                return '<span class="cardImageIcon material-icons ' + imageHelper.getLibraryIcon(item.CollectionType) + '"></span>';
+                return '<span class="cardImageIcon material-icons ' + imageHelper.getLibraryIcon(item.CollectionType) + '" aria-hidden="true"></span>';
             }
 
             switch (item.Type) {
                 case 'MusicAlbum':
-                    return '<span class="cardImageIcon material-icons album"></span>';
+                    return '<span class="cardImageIcon material-icons album" aria-hidden="true"></span>';
                 case 'MusicArtist':
                 case 'Person':
-                    return '<span class="cardImageIcon material-icons person"></span>';
+                    return '<span class="cardImageIcon material-icons person" aria-hidden="true"></span>';
                 case 'Audio':
-                    return '<span class="cardImageIcon material-icons audiotrack"></span>';
+                    return '<span class="cardImageIcon material-icons audiotrack" aria-hidden="true"></span>';
                 case 'Movie':
-                    return '<span class="cardImageIcon material-icons movie"></span>';
+                    return '<span class="cardImageIcon material-icons movie" aria-hidden="true"></span>';
+                case 'Episode':
                 case 'Series':
-                    return '<span class="cardImageIcon material-icons tv"></span>';
+                    return '<span class="cardImageIcon material-icons tv" aria-hidden="true"></span>';
+                case 'Program':
+                    return '<span class="cardImageIcon material-icons live_tv" aria-hidden="true"></span>';
                 case 'Book':
-                    return '<span class="cardImageIcon material-icons book"></span>';
+                    return '<span class="cardImageIcon material-icons book" aria-hidden="true"></span>';
                 case 'Folder':
-                    return '<span class="cardImageIcon material-icons folder"></span>';
+                    return '<span class="cardImageIcon material-icons folder" aria-hidden="true"></span>';
                 case 'BoxSet':
-                    return '<span class="cardImageIcon material-icons collections"></span>';
+                    return '<span class="cardImageIcon material-icons collections" aria-hidden="true"></span>';
                 case 'Playlist':
-                    return '<span class="cardImageIcon material-icons view_list"></span>';
+                    return '<span class="cardImageIcon material-icons view_list" aria-hidden="true"></span>';
+                case 'Photo':
+                    return '<span class="cardImageIcon material-icons photo" aria-hidden="true"></span>';
                 case 'PhotoAlbum':
-                    return '<span class="cardImageIcon material-icons photo_album"></span>';
+                    return '<span class="cardImageIcon material-icons photo_album" aria-hidden="true"></span>';
             }
 
-            if (options && options.defaultCardImageIcon) {
-                return '<span class="cardImageIcon material-icons ' + options.defaultCardImageIcon + '"></span>';
+            if (options?.defaultCardImageIcon) {
+                return '<span class="cardImageIcon material-icons ' + options.defaultCardImageIcon + '" aria-hidden="true"></span>';
             }
 
             const defaultName = isUsingLiveTvNaming(item) ? item.Name : itemHelper.getDisplayName(item);
-            return '<div class="cardText cardDefaultText">' + defaultName + '</div>';
+            return '<div class="cardText cardDefaultText">' + escapeHtml(defaultName) + '</div>';
         }
 
         /**
@@ -1604,7 +1640,7 @@ import ServerConnections from '../ServerConnections';
                     indicatorsElem = ensureIndicators(card, indicatorsElem);
                     indicatorsElem.appendChild(playedIndicator);
                 }
-                playedIndicator.innerHTML = '<span class="material-icons indicatorIcon check"></span>';
+                playedIndicator.innerHTML = '<span class="material-icons indicatorIcon check" aria-hidden="true"></span>';
             } else {
                 playedIndicator = card.querySelector('.playedIndicator');
                 if (playedIndicator) {
@@ -1687,7 +1723,7 @@ import ServerConnections from '../ServerConnections';
                 const icon = cell.querySelector('.timerIndicator');
                 if (!icon) {
                     const indicatorsElem = ensureIndicators(cell);
-                    indicatorsElem.insertAdjacentHTML('beforeend', '<span class="material-icons timerIndicator indicatorIcon fiber_manual_record"></span>');
+                    indicatorsElem.insertAdjacentHTML('beforeend', '<span class="material-icons timerIndicator indicatorIcon fiber_manual_record" aria-hidden="true"></span>');
                 }
                 cell.setAttribute('data-timerid', newTimerId);
             }

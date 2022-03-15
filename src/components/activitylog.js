@@ -1,3 +1,4 @@
+import escapeHtml from 'escape-html';
 import { Events } from 'jellyfin-apiclient';
 import globalize from '../scripts/globalize';
 import dom from '../scripts/dom';
@@ -23,29 +24,29 @@ import alert from './alert';
         }
 
         if (entry.UserId && entry.UserPrimaryImageTag) {
-            html += '<span class="listItemIcon material-icons dvr" style="width:2em!important;height:2em!important;padding:0;color:transparent;background-color:' + color + ";background-image:url('" + apiClient.getUserImageUrl(entry.UserId, {
+            html += '<span class="listItemIcon material-icons dvr" aria-hidden="true" style="width:2em!important;height:2em!important;padding:0;color:transparent;background-color:' + color + ";background-image:url('" + apiClient.getUserImageUrl(entry.UserId, {
                 type: 'Primary',
                 tag: entry.UserPrimaryImageTag
             }) + "');background-repeat:no-repeat;background-position:center center;background-size: cover;\"></span>";
         } else {
-            html += '<span class="listItemIcon material-icons ' + icon + '" style="background-color:' + color + '"></span>';
+            html += '<span class="listItemIcon material-icons ' + icon + '" aria-hidden="true" style="background-color:' + color + '"></span>';
         }
 
         html += '<div class="listItemBody three-line">';
         html += '<div class="listItemBodyText">';
-        html += entry.Name;
+        html += escapeHtml(entry.Name);
         html += '</div>';
         html += '<div class="listItemBodyText secondary">';
         html += datefns.formatRelative(Date.parse(entry.Date), Date.parse(new Date()), { locale: dfnshelper.getLocale() });
         html += '</div>';
         html += '<div class="listItemBodyText secondary listItemBodyText-nowrap">';
-        html += entry.ShortOverview || '';
+        html += escapeHtml(entry.ShortOverview || '');
         html += '</div>';
         html += '</div>';
 
         if (entry.Overview) {
             html += `<button type="button" is="paper-icon-button-light" class="btnEntryInfo" data-id="${entry.Id}" title="${globalize.translate('Info')}">
-                       <span class="material-icons info"></span>
+                       <span class="material-icons info" aria-hidden="true"></span>
                     </button>`;
         }
 

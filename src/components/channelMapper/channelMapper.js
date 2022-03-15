@@ -1,3 +1,4 @@
+import escapeHtml from 'escape-html';
 import dom from '../../scripts/dom';
 import dialogHelper from '../dialogHelper/dialogHelper';
 import loading from '../loading/loading';
@@ -29,7 +30,7 @@ export default class channelMapper {
             }).then(mapping => {
                 const listItem = dom.parentWithClass(button, 'listItem');
                 button.setAttribute('data-providerid', mapping.ProviderChannelId);
-                listItem.querySelector('.secondary').innerHTML = getMappingSecondaryName(mapping, currentMappingOptions.ProviderName);
+                listItem.querySelector('.secondary').innerText = getMappingSecondaryName(mapping, currentMappingOptions.ProviderName);
                 loading.hide();
             });
         }
@@ -72,20 +73,20 @@ export default class channelMapper {
         function getTunerChannelHtml(channel, providerName) {
             let html = '';
             html += '<div class="listItem">';
-            html += '<span class="material-icons listItemIcon dvr"></span>';
+            html += '<span class="material-icons listItemIcon dvr" aria-hidden="true"></span>';
             html += '<div class="listItemBody two-line">';
             html += '<h3 class="listItemBodyText">';
-            html += channel.Name;
+            html += escapeHtml(channel.Name);
             html += '</h3>';
             html += '<div class="secondary listItemBodyText">';
 
             if (channel.ProviderChannelName) {
-                html += getMappingSecondaryName(channel, providerName);
+                html += escapeHtml(getMappingSecondaryName(channel, providerName));
             }
 
             html += '</div>';
             html += '</div>';
-            html += `<button class="btnMap autoSize" is="paper-icon-button-light" type="button" data-id="${channel.Id}" data-providerid="${channel.ProviderChannelId}"><span class="material-icons mode_edit"></span></button>`;
+            html += `<button class="btnMap autoSize" is="paper-icon-button-light" type="button" data-id="${channel.Id}" data-providerid="${channel.ProviderChannelId}"><span class="material-icons mode_edit" aria-hidden="true"></span></button>`;
             return html += '</div>';
         }
 
@@ -127,7 +128,7 @@ export default class channelMapper {
             let html = '';
             const title = globalize.translate('MapChannels');
             html += '<div class="formDialogHeader">';
-            html += '<button is="paper-icon-button-light" class="btnCancel autoSize" tabindex="-1"><span class="material-icons arrow_back"></span></button>';
+            html += `<button is="paper-icon-button-light" class="btnCancel autoSize" tabindex="-1" title="${globalize.translate('ButtonBack')}"><span class="material-icons arrow_back" aria-hidden="true"></span></button>`;
             html += '<h3 class="formDialogHeaderTitle">';
             html += title;
             html += '</h3>';

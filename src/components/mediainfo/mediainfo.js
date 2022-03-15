@@ -1,3 +1,4 @@
+import escapeHtml from 'escape-html';
 import datetime from '../../scripts/datetime';
 import globalize from '../../scripts/globalize';
 import { appRouter } from '../appRouter';
@@ -13,7 +14,7 @@ import '../../elements/emby-button/emby-button';
         let status;
 
         if (item.Type === 'SeriesTimer') {
-            return '<span class="material-icons mediaInfoItem mediaInfoIconItem mediaInfoTimerIcon fiber_smart_record"></span>';
+            return '<span class="material-icons mediaInfoItem mediaInfoIconItem mediaInfoTimerIcon fiber_smart_record" aria-hidden="true"></span>';
         } else if (item.TimerId || item.SeriesTimerId) {
             status = item.Status || 'Cancelled';
         } else if (item.Type === 'Timer') {
@@ -24,13 +25,13 @@ import '../../elements/emby-button/emby-button';
 
         if (item.SeriesTimerId) {
             if (status !== 'Cancelled') {
-                return '<span class="material-icons mediaInfoItem mediaInfoIconItem mediaInfoTimerIcon fiber_smart_record"></span>';
+                return '<span class="material-icons mediaInfoItem mediaInfoIconItem mediaInfoTimerIcon fiber_smart_record" aria-hidden="true"></span>';
             }
 
-            return '<span class="material-icons mediaInfoItem mediaInfoIconItem fiber_smart_record"></span>';
+            return '<span class="material-icons mediaInfoItem mediaInfoIconItem fiber_smart_record" aria-hidden="true"></span>';
         }
 
-        return '<span class="material-icons mediaInfoItem mediaInfoIconItem mediaInfoTimerIcon fiber_manual_record"></span>';
+        return '<span class="material-icons mediaInfoItem mediaInfoIconItem mediaInfoTimerIcon fiber_manual_record" aria-hidden="true"></span>';
     }
 
     function getProgramInfoHtml(item, options) {
@@ -77,10 +78,10 @@ import '../../elements/emby-button/emby-button';
                         Name: item.ChannelName,
                         Id: item.ChannelId
 
-                    })}">${item.ChannelName}</a>`
+                    })}">${escapeHtml(item.ChannelName)}</a>`
                 });
             } else {
-                miscInfo.push(item.ChannelName);
+                miscInfo.push(escapeHtml(item.ChannelName));
             }
         }
 
@@ -131,7 +132,8 @@ import '../../elements/emby-button/emby-button';
         if ((item.Type === 'Episode' || item.MediaType === 'Photo') && options.originalAirDate !== false) {
             if (item.PremiereDate) {
                 try {
-                    date = datetime.parseISO8601Date(item.PremiereDate);
+                    //don't modify date to locale if episode. Only Dates (not times) are stored, or editable in the edit metadata dialog
+                    date = datetime.parseISO8601Date(item.PremiereDate, item.Type !== 'Episode');
 
                     text = datetime.toLocaleDateString(date);
                     miscInfo.push(text);
@@ -220,7 +222,7 @@ import '../../elements/emby-button/emby-button';
                 });
 
                 if (text) {
-                    miscInfo.push(text);
+                    miscInfo.push(escapeHtml(text));
                 }
             } else if (item.IsMovie && item.ProductionYear && options.originalAirDate !== false) {
                 miscInfo.push(item.ProductionYear);
@@ -357,7 +359,7 @@ import '../../elements/emby-button/emby-button';
         if (item.CommunityRating) {
             html += '<div class="starRatingContainer mediaInfoItem">';
 
-            html += '<span class="material-icons starIcon star"></span>';
+            html += '<span class="material-icons starIcon star" aria-hidden="true"></span>';
             html += item.CommunityRating.toFixed(1);
             html += '</div>';
         }

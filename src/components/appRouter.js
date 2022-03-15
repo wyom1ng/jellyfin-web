@@ -34,15 +34,20 @@ class AppRouter {
 
     constructor() {
         // WebKit fires a popstate event on document load
-        // Skip it using timeout
+        // Skip it using boolean
         // For Tizen 2.x
-        // https://stackoverflow.com/a/12214354
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                window.addEventListener('popstate', () => {
-                    this.popstateOccurred = true;
-                });
-            }, 0);
+        // See `page` node module
+        let loaded = document.readyState === 'complete';
+        if (!loaded) {
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    loaded = true;
+                }, 0);
+            });
+        }
+        window.addEventListener('popstate', () => {
+            if (!loaded) return;
+            this.popstateOccurred = true;
         });
 
         document.addEventListener('viewshow', () => this.onViewShow());
@@ -795,6 +800,10 @@ class AppRouter {
 
             if (options.section === 'onnow') {
                 return '#!/list.html?type=Programs&IsAiring=true&serverId=' + options.serverId;
+            }
+
+            if (options.section === 'channels') {
+                return '#!/livetv.html?tab=2&serverId=' + options.serverId;
             }
 
             if (options.section === 'dvrschedule') {

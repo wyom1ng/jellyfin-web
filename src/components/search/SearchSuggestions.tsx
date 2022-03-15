@@ -1,3 +1,5 @@
+import { BaseItemDto } from '@thornbill/jellyfin-sdk/dist/generated-client';
+import escapeHtml from 'escape-html';
 import React, { FunctionComponent, useEffect, useState } from 'react';
 
 import { appRouter } from '../appRouter';
@@ -9,13 +11,13 @@ import '../../elements/emby-button/emby-button';
 // There seems to be some compatibility issues here between
 // React and our legacy web components, so we need to inject
 // them as an html string for now =/
-const createSuggestionLink = ({name, href}) => ({
+const createSuggestionLink = ({ name, href }: { name: string, href: string }) => ({
     __html: `<a
     is='emby-linkbutton'
     class='button-link'
     style='display: inline-block; padding: 0.5em 1em;'
     href='${href}'
->${name}</a>`
+>${escapeHtml(name)}</a>`
 });
 
 type SearchSuggestionsProps = {
@@ -23,12 +25,11 @@ type SearchSuggestionsProps = {
     parentId?: string;
 }
 
-const SearchSuggestions: FunctionComponent<SearchSuggestionsProps> = ({ serverId, parentId }: SearchSuggestionsProps) => {
-    const [ suggestions, setSuggestions ] = useState([]);
+const SearchSuggestions: FunctionComponent<SearchSuggestionsProps> = ({ serverId = window.ApiClient.serverId(), parentId }: SearchSuggestionsProps) => {
+    const [ suggestions, setSuggestions ] = useState<BaseItemDto[]>([]);
 
     useEffect(() => {
-        // TODO: Remove type casting once we're using a properly typed API client
-        const apiClient = (ServerConnections as any).getApiClient(serverId);
+        const apiClient = ServerConnections.getApiClient(serverId);
 
         apiClient.getItems(apiClient.getCurrentUserId(), {
             SortBy: 'IsFavoriteOrLiked,Random',
@@ -39,7 +40,7 @@ const SearchSuggestions: FunctionComponent<SearchSuggestionsProps> = ({ serverId
             EnableImages: false,
             ParentId: parentId,
             EnableTotalRecordCount: false
-        }).then(result => setSuggestions(result.Items));
+        }).then(result => setSuggestions(result.Items || []));
     }, [parentId, serverId]);
 
     return (
@@ -58,7 +59,7 @@ const SearchSuggestions: FunctionComponent<SearchSuggestionsProps> = ({ serverId
                     <div
                         key={`suggestion-${item.Id}`}
                         dangerouslySetInnerHTML={createSuggestionLink({
-                            name: item.Name,
+                            name: item.Name || '',
                             href: appRouter.getRouteUrl(item)
                         })}
                     />

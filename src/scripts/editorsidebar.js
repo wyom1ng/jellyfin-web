@@ -1,3 +1,4 @@
+import escapeHtml from 'escape-html';
 import 'jquery';
 import globalize from './globalize';
 import 'material-design-icons-iconfont';
@@ -47,22 +48,22 @@ import Dashboard from './clientUtils';
         }
         let htmlName = "<div class='editorNode'>";
         if (item.IsFolder) {
-            htmlName += '<span class="material-icons metadataSidebarIcon folder"></span>';
+            htmlName += '<span class="material-icons metadataSidebarIcon folder" aria-hidden="true"></span>';
         } else if (item.MediaType === 'Video') {
-            htmlName += '<span class="material-icons metadataSidebarIcon movie"></span>';
+            htmlName += '<span class="material-icons metadataSidebarIcon movie" aria-hidden="true"></span>';
         } else if (item.MediaType === 'Audio') {
-            htmlName += '<span class="material-icons metadataSidebarIcon audiotrack"></span>';
+            htmlName += '<span class="material-icons metadataSidebarIcon audiotrack" aria-hidden="true"></span>';
         } else if (item.Type === 'TvChannel') {
-            htmlName += '<span class="material-icons metadataSidebarIcon live_tv"></span>';
+            htmlName += '<span class="material-icons metadataSidebarIcon live_tv" aria-hidden="true"></span>';
         } else if (item.MediaType === 'Photo') {
-            htmlName += '<span class="material-icons metadataSidebarIcon photo"></span>';
+            htmlName += '<span class="material-icons metadataSidebarIcon photo" aria-hidden="true"></span>';
         } else if (item.MediaType === 'Book') {
-            htmlName += '<span class="material-icons metadataSidebarIcon book"></span>';
+            htmlName += '<span class="material-icons metadataSidebarIcon book" aria-hidden="true"></span>';
         }
         if (item.LockData) {
-            htmlName += '<span class="material-icons metadataSidebarIcon lock"></span>';
+            htmlName += '<span class="material-icons metadataSidebarIcon lock" aria-hidden="true"></span>';
         }
-        htmlName += name;
+        htmlName += escapeHtml(name);
         htmlName += '</div>';
         return htmlName;
     }

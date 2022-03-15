@@ -12,6 +12,8 @@ import Screenfull from 'screenfull';
 import ServerConnections from '../ServerConnections';
 import alert from '../alert';
 
+const UNLIMITED_ITEMS = -1;
+
 function enableLocalPlaylistManagement(player) {
     if (player.getPlaylist) {
         return false;
@@ -119,7 +121,11 @@ function getItemsForPlayback(serverId, query) {
             };
         });
     } else {
-        query.Limit = query.Limit || 300;
+        if (query.Limit === UNLIMITED_ITEMS) {
+            delete query.Limit;
+        } else {
+            query.Limit = query.Limit || 300;
+        }
         query.Fields = 'Chapters';
         query.ExcludeLocationTypes = 'Virtual';
         query.EnableTotalRecordCount = false;
@@ -1774,7 +1780,8 @@ class PlaybackManager {
                     // Setting this to true may cause some incorrect sorting
                     Recursive: false,
                     SortBy: options.shuffle ? 'Random' : 'SortName',
-                    MediaTypes: 'Photo,Video'
+                    MediaTypes: 'Photo,Video',
+                    Limit: UNLIMITED_ITEMS
                 }).then(function (result) {
                     const items = result.Items;
 
@@ -1799,7 +1806,7 @@ class PlaybackManager {
                     SortBy: options.shuffle ? 'Random' : 'SortName',
                     // Only include Photos because we do not handle mixed queues currently
                     MediaTypes: 'Photo',
-                    Limit: 1000
+                    Limit: UNLIMITED_ITEMS
                 });
             } else if (firstItem.Type === 'MusicGenre') {
                 promise = getItemsForPlayback(serverId, {
@@ -1817,7 +1824,7 @@ class PlaybackManager {
                     SortBy: options.shuffle ? 'Random' : 'SortName',
                     // Only include Photos because we do not handle mixed queues currently
                     MediaTypes: 'Photo',
-                    Limit: 1000
+                    Limit: UNLIMITED_ITEMS
                 }, queryOptions));
             } else if (firstItem.IsFolder) {
                 promise = getItemsForPlayback(serverId, mergePlaybackQueries({
@@ -2385,8 +2392,11 @@ class PlaybackManager {
 
                     streamInfo.fullscreen = playOptions.fullscreen;
 
-                    getPlayerData(player).isChangingStream = false;
-                    getPlayerData(player).maxStreamingBitrate = maxBitrate;
+                    const playerData = getPlayerData(player);
+
+                    playerData.isChangingStream = false;
+                    playerData.maxStreamingBitrate = maxBitrate;
+                    playerData.streamInfo = streamInfo;
 
                     return player.play(streamInfo).then(function () {
                         loading.hide();
@@ -3312,6 +3322,7 @@ class PlaybackManager {
                 mediaSource.MediaStreams = info.MediaStreams;
                 Events.trigger(player, 'mediastreamschange');
             }, function () {
+                // Swallow errors
             });
         }
 
@@ -3499,7 +3510,7 @@ class PlaybackManager {
         this.seek(ticks, player);
     }
 
-    playTrailers(item) {
+    async playTrailers(item) {
         const player = this._currentPlayer;
 
         if (player && player.playTrailers) {
@@ -3508,33 +3519,31 @@ class PlaybackManager {
 
         const apiClient = ServerConnections.getApiClient(item.ServerId);
 
-        const instance = this;
+        let items;
 
         if (item.LocalTrailerCount) {
-            return apiClient.getLocalTrailers(apiClient.getCurrentUserId(), item.Id).then(function (result) {
-                return instance.play({
-                    items: result
-                });
-            });
-        } else {
-            const remoteTrailers = item.RemoteTrailers || [];
+            items = await apiClient.getLocalTrailers(apiClient.getCurrentUserId(), item.Id);
+        }
 
-            if (!remoteTrailers.length) {
-                return Promise.reject();
-            }
-
-            return this.play({
-                items: remoteTrailers.map(function (t) {
-                    return {
-                        Name: t.Name || (item.Name + ' Trailer'),
-                        Url: t.Url,
-                        MediaType: 'Video',
-                        Type: 'Trailer',
-                        ServerId: apiClient.serverId()
-                    };
-                })
+        if (!items || !items.length) {
+            items = (item.RemoteTrailers || []).map((t) => {
+                return {
+                    Name: t.Name || (item.Name + ' Trailer'),
+                    Url: t.Url,
+                    MediaType: 'Video',
+                    Type: 'Trailer',
+                    ServerId: apiClient.serverId()
+                };
             });
         }
+
+        if (items.length) {
+            return this.play({
+                items
+            });
+        }
+
+        return Promise.reject();
     }
 
     getSubtitleUrl(textStream, serverId) {
