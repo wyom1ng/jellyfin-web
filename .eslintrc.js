@@ -43,6 +43,7 @@ module.exports = {
         'jsx-quotes': ['error', 'prefer-single'],
         'keyword-spacing': ['error'],
         'max-statements-per-line': ['error'],
+        'no-duplicate-imports': ['error'],
         'no-empty-function': ['error'],
         'no-floating-decimal': ['error'],
         'no-multi-spaces': ['error'],
@@ -50,15 +51,18 @@ module.exports = {
         'no-restricted-globals': ['error'].concat(restrictedGlobals),
         'no-trailing-spaces': ['error'],
         '@babel/no-unused-expressions': ['error', { 'allowShortCircuit': true, 'allowTernary': true, 'allowTaggedTemplates': true }],
+        'no-void': ['error', { 'allowAsStatement': true }],
+        'no-nested-ternary': ['error'],
         'one-var': ['error', 'never'],
         'padded-blocks': ['error', 'never'],
-        'prefer-const': ['error', {'destructuring': 'all'}],
+        'prefer-const': ['error', { 'destructuring': 'all' }],
         'quotes': ['error', 'single', { 'avoidEscape': true, 'allowTemplateLiterals': false }],
         '@babel/semi': ['error'],
         'no-var': ['error'],
         'space-before-blocks': ['error'],
         'space-infix-ops': 'error',
-        'yoda': 'error'
+        'yoda': 'error',
+        'no-sequences': ['error', { 'allowInParentheses': false }]
     },
     settings: {
         react: {
@@ -160,6 +164,17 @@ module.exports = {
         ]
     },
     overrides: [
+        // Config files and development scripts
+        {
+            files: [
+                './babel.config.js',
+                './.eslintrc.js',
+                './postcss.config.js',
+                './webpack.*.js',
+                './scripts/**/*.js'
+            ]
+        },
+        // JavaScript source files
         {
             files: [
                 './src/**/*.js',
@@ -192,8 +207,6 @@ module.exports = {
                 'DlnaProfilePage': 'writable',
                 'DashboardPage': 'writable',
                 'Emby': 'readonly',
-                'getParameterByName': 'writable',
-                'getWindowLocationSearch': 'writable',
                 'Globalize': 'writable',
                 'Hls': 'writable',
                 'dfnshelper': 'writable',
@@ -202,7 +215,6 @@ module.exports = {
                 'LiveTvHelpers': 'writable',
                 'Loading': 'writable',
                 'MetadataEditor': 'writable',
-                'PlaylistViewer': 'writable',
                 'ServerNotifications': 'writable',
                 'TaskButton': 'writable',
                 'UserParentalControlPage': 'writable',
@@ -211,6 +223,7 @@ module.exports = {
             rules: {
             }
         },
+        // TypeScript source files
         {
             files: [
                 './src/**/*.ts',

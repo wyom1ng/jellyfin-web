@@ -19,7 +19,7 @@ import '../../elements/emby-button/emby-button';
 import '../../assets/css/flexstyles.scss';
 import '../../elements/emby-itemscontainer/emby-itemscontainer';
 import taskButton from '../../scripts/taskbutton';
-import Dashboard from '../../scripts/clientUtils';
+import Dashboard from '../../utils/dashboard';
 import ServerConnections from '../../components/ServerConnections';
 import alert from '../../components/alert';
 import confirm from '../../components/confirm/confirm';
@@ -175,7 +175,8 @@ import confirm from '../../components/confirm/confirm';
 
             if (!result.Items.length) {
                 view.querySelector('.activeRecordingsSection').classList.add('hide');
-                return void(itemsContainer.innerHTML = '');
+                itemsContainer.innerHTML = '';
+                return;
             }
 
             view.querySelector('.activeRecordingsSection').classList.remove('hide');
@@ -525,11 +526,11 @@ import confirm from '../../components/confirm/confirm';
             const html = [];
 
             if (session.UserId) {
-                html.push(session.UserName);
+                html.push(escapeHtml(session.UserName));
             }
 
             for (let i = 0, length = session.AdditionalUsers.length; i < length; i++) {
-                html.push(session.AdditionalUsers[i].UserName);
+                html.push(escapeHtml(session.AdditionalUsers[i].UserName));
             }
 
             return html.join(', ');
@@ -577,7 +578,7 @@ import confirm from '../../components/confirm/confirm';
             btnSessionPlayPauseIcon.classList.add(session.PlayState && session.PlayState.IsPaused ? 'play_arrow' : 'pause');
 
             row.querySelector('.sessionNowPlayingTime').innerText = DashboardPage.getSessionNowPlayingTime(session);
-            row.querySelector('.sessionUserName').innerText = DashboardPage.getUsersHtml(session);
+            row.querySelector('.sessionUserName').innerHTML = DashboardPage.getUsersHtml(session);
             row.querySelector('.sessionAppSecondaryText').innerText = DashboardPage.getAppSecondaryText(session);
             const nowPlayingName = DashboardPage.getNowPlayingName(session);
             const nowPlayingInfoElem = row.querySelector('.sessionNowPlayingInfo');

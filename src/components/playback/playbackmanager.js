@@ -1721,17 +1721,17 @@ class PlaybackManager {
         }
 
         function setSrcIntoPlayer(apiClient, player, streamInfo) {
-            return player.play(streamInfo).then(function () {
-                const playerData = getPlayerData(player);
+            const playerData = getPlayerData(player);
 
+            playerData.streamInfo = streamInfo;
+
+            return player.play(streamInfo).then(function () {
                 playerData.isChangingStream = false;
-                playerData.streamInfo = streamInfo;
                 streamInfo.started = true;
                 streamInfo.ended = false;
 
                 sendProgressUpdate(player, 'timeupdate');
             }, function (e) {
-                const playerData = getPlayerData(player);
                 playerData.isChangingStream = false;
 
                 onPlaybackError.call(player, e, {
@@ -1827,12 +1827,18 @@ class PlaybackManager {
                     Limit: UNLIMITED_ITEMS
                 }, queryOptions));
             } else if (firstItem.IsFolder) {
+                let sortBy = null;
+                if (options.shuffle) {
+                    sortBy = 'Random';
+                } else if (firstItem.Type !== 'BoxSet') {
+                    sortBy = 'SortName';
+                }
                 promise = getItemsForPlayback(serverId, mergePlaybackQueries({
                     ParentId: firstItem.Id,
                     Filters: 'IsNotFolder',
                     Recursive: true,
                     // These are pre-sorted
-                    SortBy: options.shuffle ? 'Random' : (['BoxSet'].indexOf(firstItem.Type) === -1 ? 'SortName' : null),
+                    SortBy: sortBy,
                     MediaTypes: 'Audio,Video'
                 }, queryOptions));
             } else if (firstItem.Type === 'Episode' && items.length === 1 && getPlayer(firstItem, options).supportsProgress !== false) {
@@ -2275,7 +2281,7 @@ class PlaybackManager {
                     score += 1;
                 if (prevRelIndex == newRelIndex)
                     score += 1;
-                if (prevStream.Title && prevStream.Title == stream.Title)
+                if (prevStream.DisplayTitle && prevStream.DisplayTitle == stream.DisplayTitle)
                     score += 2;
                 if (prevStream.Language && prevStream.Language != 'und' && prevStream.Language == stream.Language)
                     score += 2;
@@ -2300,7 +2306,7 @@ class PlaybackManager {
             }
         }
 
-        function autoSetNextTracks(prevSource, mediaSource) {
+        function autoSetNextTracks(prevSource, mediaSource, audio, subtitle) {
             try {
                 if (!prevSource) return;
 
@@ -2309,18 +2315,13 @@ class PlaybackManager {
                     return;
                 }
 
-                if (typeof prevSource.DefaultAudioStreamIndex != 'number'
-                    || typeof prevSource.DefaultSubtitleStreamIndex != 'number')
-                    return;
-
-                if (typeof mediaSource.DefaultAudioStreamIndex != 'number'
-                    || typeof mediaSource.DefaultSubtitleStreamIndex != 'number') {
-                    console.warn('AutoSet - No stream indexes (but prevSource has them)');
-                    return;
+                if (audio && typeof prevSource.DefaultAudioStreamIndex == 'number') {
+                    rankStreamType(prevSource.DefaultAudioStreamIndex, prevSource, mediaSource, 'Audio');
                 }
 
-                rankStreamType(prevSource.DefaultAudioStreamIndex, prevSource, mediaSource, 'Audio');
-                rankStreamType(prevSource.DefaultSubtitleStreamIndex, prevSource, mediaSource, 'Subtitle');
+                if (subtitle && typeof prevSource.DefaultSubtitleStreamIndex == 'number') {
+                    rankStreamType(prevSource.DefaultSubtitleStreamIndex, prevSource, mediaSource, 'Subtitle');
+                }
             } catch (e) {
                 console.error(`AutoSet - Caught unexpected error: ${e}`);
             }
@@ -2384,9 +2385,9 @@ class PlaybackManager {
                 // this reference was only needed by sendPlaybackListToPlayer
                 playOptions.items = null;
 
-                return getPlaybackMediaSource(player, apiClient, deviceProfile, maxBitrate, item, startPosition, mediaSourceId, audioStreamIndex, subtitleStreamIndex).then(function (mediaSource) {
-                    if (userSettings.enableSetUsingLastTracks())
-                        autoSetNextTracks(prevSource, mediaSource);
+                return getPlaybackMediaSource(player, apiClient, deviceProfile, maxBitrate, item, startPosition, mediaSourceId, audioStreamIndex, subtitleStreamIndex).then(async (mediaSource) => {
+                    const user = await apiClient.getCurrentUser();
+                    autoSetNextTracks(prevSource, mediaSource, user.Configuration.RememberAudioSelections, user.Configuration.RememberSubtitleSelections);
 
                     const streamInfo = createStreamInfo(apiClient, item.MediaType, item, mediaSource, startPosition, player);
 
@@ -3034,7 +3035,7 @@ class PlaybackManager {
 
             const streamInfo = error.streamInfo || getPlayerData(player).streamInfo;
 
-            if (streamInfo) {
+            if (streamInfo?.url) {
                 const currentlyPreventsVideoStreamCopy = streamInfo.url.toLowerCase().indexOf('allowvideostreamcopy=false') !== -1;
                 const currentlyPreventsAudioStreamCopy = streamInfo.url.toLowerCase().indexOf('allowaudiostreamcopy=false') !== -1;
 
@@ -3657,7 +3658,7 @@ class PlaybackManager {
         if (player.audioTracks) {
             const result = player.audioTracks();
             if (result) {
-                return result;
+                return result.sort(itemHelper.sortTracks);
             }
         }
 
@@ -3666,14 +3667,14 @@ class PlaybackManager {
         const mediaStreams = (mediaSource || {}).MediaStreams || [];
         return mediaStreams.filter(function (s) {
             return s.Type === 'Audio';
-        });
+        }).sort(itemHelper.sortTracks);
     }
 
     subtitleTracks(player = this._currentPlayer) {
         if (player.subtitleTracks) {
             const result = player.subtitleTracks();
             if (result) {
-                return result;
+                return result.sort(itemHelper.sortTracks);
             }
         }
 
@@ -3682,7 +3683,7 @@ class PlaybackManager {
         const mediaStreams = (mediaSource || {}).MediaStreams || [];
         return mediaStreams.filter(function (s) {
             return s.Type === 'Subtitle';
-        });
+        }).sort(itemHelper.sortTracks);
     }
 
     getSupportedCommands(player) {

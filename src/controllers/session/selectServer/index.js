@@ -15,7 +15,7 @@ import '../../../elements/emby-scroller/emby-scroller';
 import '../../../elements/emby-itemscontainer/emby-itemscontainer';
 import '../../../components/cardbuilder/card.scss';
 import '../../../elements/emby-button/emby-button';
-import Dashboard from '../../../scripts/clientUtils';
+import Dashboard from '../../../utils/dashboard';
 import ServerConnections from '../../../components/ServerConnections';
 import alert from '../../../components/alert';
 import cardBuilder from '../../../components/cardbuilder/cardBuilder';
@@ -196,7 +196,7 @@ import cardBuilder from '../../../components/cardbuilder/cardBuilder';
         updatePageStyle(view, params);
         view.addEventListener('viewshow', function (e) {
             const isRestored = e.detail.isRestored;
-            appRouter.setTitle(null);
+            libraryMenu.setTitle(null);
             libraryMenu.setTransparentMenu(true);
 
             if (!isRestored) {

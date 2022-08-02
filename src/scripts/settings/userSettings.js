@@ -1,5 +1,6 @@
 import appSettings from './appSettings';
 import { Events } from 'jellyfin-apiclient';
+import { toBoolean } from '../../utils/string.ts';
 
 function onSaveTimeout() {
     const self = this;
@@ -134,8 +135,7 @@ export class UserSettings {
             return this.set('preferFmp4HlsContainer', val.toString(), false);
         }
 
-        val = this.get('preferFmp4HlsContainer', false);
-        return val === 'true';
+        return toBoolean(this.get('preferFmp4HlsContainer', false), false);
     }
 
     /**
@@ -148,8 +148,7 @@ export class UserSettings {
             return this.set('enableCinemaMode', val.toString(), false);
         }
 
-        val = this.get('enableCinemaMode', false);
-        return val !== 'false';
+        return toBoolean(this.get('enableCinemaMode', false), true);
     }
 
     /**
@@ -162,21 +161,7 @@ export class UserSettings {
             return this.set('enableNextVideoInfoOverlay', val.toString());
         }
 
-        val = this.get('enableNextVideoInfoOverlay', false);
-        return val !== 'false';
-    }
-
-    /**
-     * Get or set 'SetUsingLastTracks' state.
-     * @param {boolean|undefined} val - Flag to enable 'SetUsingLastTracks' or undefined.
-     * @return {boolean} 'SetUsingLastTracks' state.
-     */
-    enableSetUsingLastTracks(val) {
-        if (val !== undefined) {
-            return this.set('enableSetUsingLastTracks', val.toString());
-        }
-
-        return this.get('enableSetUsingLastTracks', false) !== 'false';
+        return toBoolean(this.get('enableNextVideoInfoOverlay', false), true);
     }
 
     /**
@@ -189,8 +174,7 @@ export class UserSettings {
             return this.set('enableThemeSongs', val.toString(), false);
         }
 
-        val = this.get('enableThemeSongs', false);
-        return val === 'true';
+        return toBoolean(this.get('enableThemeSongs', false), false);
     }
 
     /**
@@ -203,8 +187,7 @@ export class UserSettings {
             return this.set('enableThemeVideos', val.toString(), false);
         }
 
-        val = this.get('enableThemeVideos', false);
-        return val === 'true';
+        return toBoolean(this.get('enableThemeVideos', false), false);
     }
 
     /**
@@ -217,8 +200,7 @@ export class UserSettings {
             return this.set('fastFadein', val.toString(), false);
         }
 
-        val = this.get('fastFadein', false);
-        return val !== 'false';
+        return toBoolean(this.get('fastFadein', false), true);
     }
 
     /**
@@ -231,8 +213,7 @@ export class UserSettings {
             return this.set('blurhash', val.toString(), false);
         }
 
-        val = this.get('blurhash', false);
-        return val !== 'false';
+        return toBoolean(this.get('blurhash', false), true);
     }
 
     /**
@@ -245,8 +226,7 @@ export class UserSettings {
             return this.set('enableBackdrops', val.toString(), false);
         }
 
-        val = this.get('enableBackdrops', false);
-        return val === 'true';
+        return toBoolean(this.get('enableBackdrops', false), false);
     }
 
     /**
@@ -259,7 +239,7 @@ export class UserSettings {
             return this.set('disableCustomCss', val.toString(), false);
         }
 
-        return this.get('disableCustomCss', false) === 'true';
+        return toBoolean(this.get('disableCustomCss', false), false);
     }
 
     /**
@@ -285,8 +265,7 @@ export class UserSettings {
             return this.set('detailsBanner', val.toString(), false);
         }
 
-        val = this.get('detailsBanner', false);
-        return val !== 'false';
+        return toBoolean(this.get('detailsBanner', false), true);
     }
 
     /**
@@ -299,8 +278,7 @@ export class UserSettings {
             return this.set('useEpisodeImagesInNextUpAndResume', val.toString(), true);
         }
 
-        val = this.get('useEpisodeImagesInNextUpAndResume', true);
-        return val === 'true';
+        return toBoolean(this.get('useEpisodeImagesInNextUpAndResume', true), false);
     }
 
     /**
@@ -468,7 +446,7 @@ export class UserSettings {
             return this.set('enableRewatchingInNextUp', val, false);
         }
 
-        return this.get('enableRewatchingInNextUp', false);
+        return toBoolean(this.get('enableRewatchingInNextUp', false), false);
     }
 
     /**
@@ -570,7 +548,6 @@ export const allowedAudioChannels = currentSettings.allowedAudioChannels.bind(cu
 export const preferFmp4HlsContainer = currentSettings.preferFmp4HlsContainer.bind(currentSettings);
 export const enableCinemaMode = currentSettings.enableCinemaMode.bind(currentSettings);
 export const enableNextVideoInfoOverlay = currentSettings.enableNextVideoInfoOverlay.bind(currentSettings);
-export const enableSetUsingLastTracks = currentSettings.enableSetUsingLastTracks.bind(currentSettings);
 export const enableThemeSongs = currentSettings.enableThemeSongs.bind(currentSettings);
 export const enableThemeVideos = currentSettings.enableThemeVideos.bind(currentSettings);
 export const enableFastFadein = currentSettings.enableFastFadein.bind(currentSettings);

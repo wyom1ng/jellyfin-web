@@ -39,6 +39,26 @@ function getDeviceProfile(item) {
             profile = profileBuilder(builderOpts);
         }
 
+        const maxVideoWidth = appSettings.maxVideoWidth();
+        const maxTranscodingVideoWidth = maxVideoWidth < 0 ? appHost.screen()?.maxAllowedWidth : maxVideoWidth;
+
+        if (maxTranscodingVideoWidth) {
+            profile.TranscodingProfiles.forEach((transcodingProfile) => {
+                if (transcodingProfile.Type === 'Video') {
+                    transcodingProfile.Conditions = (transcodingProfile.Conditions || []).filter((condition) => {
+                        return condition.Property !== 'Width';
+                    });
+
+                    transcodingProfile.Conditions.push({
+                        Condition: 'LessThanEqual',
+                        Property: 'Width',
+                        Value: maxTranscodingVideoWidth.toString(),
+                        IsRequired: false
+                    });
+                }
+            });
+        }
+
         resolve(profile);
     });
 }
@@ -56,7 +76,9 @@ function replaceAll(originalString, strReplace, strWith) {
 function generateDeviceId() {
     const keys = [];
 
-    if (keys.push(navigator.userAgent), keys.push(new Date().getTime()), window.btoa) {
+    keys.push(navigator.userAgent);
+    keys.push(new Date().getTime());
+    if (window.btoa) {
         const result = replaceAll(btoa(keys.join('|')), '=', '1');
         return result;
     }
@@ -382,6 +404,27 @@ export const appHost = {
             const att = scalable ? 'width=device-width, initial-scale=1, minimum-scale=1, user-scalable=yes' : 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no';
             document.querySelector('meta[name=viewport]').setAttribute('content', att);
         }
+    },
+    screen: () => {
+        let hostScreen = null;
+
+        const appHostImpl = window.NativeShell?.AppHost;
+
+        if (appHostImpl?.screen) {
+            hostScreen = appHostImpl.screen();
+        } else if (window.screen && !browser.tv) {
+            hostScreen = {
+                width: Math.floor(window.screen.width * window.devicePixelRatio),
+                height: Math.floor(window.screen.height * window.devicePixelRatio)
+            };
+        }
+
+        if (hostScreen) {
+            // Use larger dimension to account for screen orientation changes
+            hostScreen.maxAllowedWidth = Math.max(hostScreen.width, hostScreen.height);
+        }
+
+        return hostScreen;
     }
 };
 

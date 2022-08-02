@@ -10,7 +10,6 @@ import TableOfContents from './tableOfContents';
 import dom from '../../scripts/dom';
 import { translateHtml } from '../../scripts/globalize';
 
-import '../../scripts/dom';
 import '../../elements/emby-button/paper-icon-button-light';
 
 import html from './template.html';
@@ -287,7 +286,9 @@ export class BookPlayer {
                     width: '100%',
                     height: renderHeight,
                     // TODO: Add option for scrolled-doc
-                    flow: 'paginated'
+                    flow: 'paginated',
+                    // Scripted content is required to allow touch event passthrough in Safari
+                    allowScriptedContent: true
                 });
 
                 this.currentSrc = downloadHref;
